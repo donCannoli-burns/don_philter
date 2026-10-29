@@ -43,6 +43,7 @@ function loadCurrentCleanupRules(dataFileName: string) {
   // Maybe we could remove it altogether
   const cleanupRules =
     loadCleanupRulesetFile(dataFileName) ||
+    loadCleanupRulesetFile(dataFileName.replace(/^don_data_/, 'OCDdata_')) ||
     loadCleanupRulesetFile(`OCD_${myName()}_Data.txt`);
   assert.ok(
     cleanupRules,
@@ -63,11 +64,11 @@ function doPhilter(config: Readonly<PhilterConfig>): {
   let finalSale = 0;
 
   const cleanupRules = loadCurrentCleanupRules(
-    `OCDdata_${config.dataFileName}.txt`
+    `don_data_${config.dataFileName}.txt`
   );
   let stockingRules = loadStockingRulesetFile(
-    `OCDstock_${config.stockFileName}.txt`
-  );
+    `don_stock_${config.stockFileName}.txt`
+  ) || loadStockingRulesetFile(`OCDstock_${config.stockFileName}.txt`);
   if (!stockingRules) {
     if (getvar('BaleOCD_Stock') === '1') {
       assert.fail('You are missing item stocking information.');

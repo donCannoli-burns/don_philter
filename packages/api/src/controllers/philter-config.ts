@@ -7,7 +7,7 @@
  * file extension.
  */
 export function getFullDataFileName(fileNameComponent: string) {
-  return `OCDdata_${fileNameComponent}.txt`;
+  return `don_data_${fileNameComponent}.txt`;
 }
 
 /**
@@ -15,5 +15,5 @@ export function getFullDataFileName(fileNameComponent: string) {
  * prefix and file extension.
  */
 export function getFullStockFileName(fileNameComponent: string) {
-  return `OCDstock_${fileNameComponent}.txt`;
+  return `don_stock_${fileNameComponent}.txt`;
 }

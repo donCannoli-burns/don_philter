@@ -24,20 +24,7 @@ function debug(message) {
     zlib_ash.vprint(message, '#808080', 6);
 }
 
-function checkProjectUpdates() {
-    // Check version! This will check both scripts and data files.
-    // This code is at base level so that the relay script's importation will automatically cause it to be run.
-    var PROJECT_NAME = 'Loathing-Associates-Scripting-Society-philter-trunk-release';
-    if (kolmafia.svnExists(PROJECT_NAME) &&
-        kolmafia.getProperty('_svnUpdated') === 'false' &&
-        kolmafia.getProperty('_ocdUpdated') !== 'true') {
-        if (!kolmafia.svnAtHead(PROJECT_NAME)) {
-            warn('Philter has become outdated. Automatically updating from SVN...');
-            kolmafia.cliExecute(("svn update " + PROJECT_NAME));
-            success("On the script's next invocation it will be up to date.");
-        }
-        kolmafia.setProperty('_ocdUpdated', 'true');
-    }
+function checkProjectUpdates() { /* don_philter uses git update; no upstream SVN writes */ 
 }
 
 /**
@@ -799,8 +786,7 @@ function cleanupSimple(ref) {
                 : '';
             messages.push((amount + " " + item + itemSuffix));
         }
-        info((commandPrefix + " " + (messages.join(', '))));
-        info(' ');
+        if (config.simulateOnly || kolmafia.getProperty('don_philterVerbose') === 'true') info((commandPrefix + " " + (messages.join(', '))));
     }
     if (!config.simulateOnly) {
         process(sortedItems);
@@ -864,8 +850,7 @@ function printAutosell(items) {
             lineValue += amount * kolmafia.autosellPrice(item);
             messages.push((amount + " " + item));
         }
-        info(("autosell " + (messages.join(', '))));
-        info(' ');
+        if (kolmafia.getProperty('don_philterVerbose') === 'true') info(("autosell " + (messages.join(', '))));
         expectedProfitTotal += lineValue;
     }
     info(("Total autosale = " + (zlib_ash.rnum(expectedProfitTotal))));
@@ -1122,10 +1107,10 @@ function printMallAndMakePriceCache(items, cleanupRules, config) {
             }
             messages.push(msg);
         }
-        info(com + messages.join(', '));
-        // TODO: Don't print line value when sending to mall multi
-        info(("Sale price for this line: " + (zlib_ash.rnum(lineValue))));
-        info(' ');
+        if (config.simulateOnly || kolmafia.getProperty('don_philterVerbose') === 'true') {
+            info(com + messages.join(', '));
+            info(("Sale price for this line: " + (zlib_ash.rnum(lineValue))));
+        }
         finalSale += lineValue;
     }
     if (!shouldUseMulti(config)) {
@@ -1844,6 +1829,7 @@ function loadCurrentCleanupRules(dataFileName) {
     // TODO: Hopefully, nobody is using `OCD_<name>_Data.txt`.
     // Maybe we could remove it altogether
     var cleanupRules = loadCleanupRulesetFile(dataFileName) ||
+        loadCleanupRulesetFile(dataFileName.replace(/^don_data_/, 'OCDdata_')) ||
         loadCleanupRulesetFile(("OCD_" + (kolmafia.myName()) + "_Data.txt"));
     ok(cleanupRules, ("Failed to load cleanup rules from file \"" + dataFileName + "\""));
     isAbove(cleanupRules.size, 0, ("Failed to load cleanup rules, file \"" + dataFileName + "\" is empty or missing"));
@@ -1851,8 +1837,9 @@ function loadCurrentCleanupRules(dataFileName) {
 }
 function doPhilter(config) {
     var finalSale = 0;
-    var cleanupRules = loadCurrentCleanupRules(("OCDdata_" + (config.dataFileName) + ".txt"));
-    var stockingRules = loadStockingRulesetFile(("OCDstock_" + (config.stockFileName) + ".txt"));
+    var cleanupRules = loadCurrentCleanupRules(("don_data_" + (config.dataFileName) + ".txt"));
+    var stockingRules = loadStockingRulesetFile(("don_stock_" + (config.stockFileName) + ".txt")) ||
+        loadStockingRulesetFile(("OCDstock_" + (config.stockFileName) + ".txt"));
     if (!stockingRules) {
         if (zlib_ash.getvar('BaleOCD_Stock') === '1') {
             fail('You are missing item stocking information.');
@@ -1946,17 +1933,54 @@ function canInteractCheck() {
 }
 // TODO: Parse CLI arguments, merge them with ZLib configs, and make the rest of
 // the app use the merged config instead of accessing settings directly.
-function main() {
-    // TODO: Remove this warning when ocd-cleanup.ash is deprecated
-    warn('Philter.js is currently in alpha. It may contain bugs which could destroy your items.');
-    warn("If you want to stay on the safe side, halt this script and run 'ocd-cleanup.ash' instead.");
-    kolmafia.wait(10);
+function donMigrateLegacyData(dataName, stockName) {
+    var name = kolmafia.myName();
+    var plans = [
+        {target:'don_data_' + dataName + '.txt',backup:'don_archive_data_' + dataName + '.txt',
+         sources:['OCDdata_' + dataName + '.txt','OCD_' + name + '_Data.txt','OCD_' + name + '.txt']},
+        {target:'don_stock_' + stockName + '.txt',backup:'don_archive_stock_' + stockName + '.txt',
+         sources:['OCDstock_' + stockName + '.txt']}
+    ];
+    var copies = 0;
+    for (var plan of plans) {
+        if (kolmafia.fileToBuffer(plan.target).trim()) continue;
+        for (var oldFile of plan.sources) {
+            var oldData = kolmafia.fileToBuffer(oldFile);
+            if (!oldData.trim()) continue;
+            if (!kolmafia.fileToBuffer(plan.backup).trim() && !kolmafia.bufferToFile(oldData, plan.backup))
+                throw new Error('Cannot archive legacy data into ' + plan.backup);
+            if (!kolmafia.bufferToFile(oldData, plan.target))
+                throw new Error('Cannot migrate legacy data into ' + plan.target);
+            copies++;
+            break;
+        }
+    }
+    if (!kolmafia.getProperty('don_mallManagerHighlight')) kolmafia.setProperty('don_mallManagerHighlight','2000000');
+    if (!kolmafia.getProperty('don_philterVerbose')) kolmafia.setProperty('don_philterVerbose','false');
+    return copies;
+}
+function main(command) {
+    // don_philter fork entrypoint
     setDefaultConfig();
-    checkProjectUpdates();
+    var copies = donMigrateLegacyData(zlib_ash.getvar('BaleOCD_DataFile'), zlib_ash.getvar('BaleOCD_StockFile'));
+    if (copies) success('Recovered ' + copies + ' upstream ruleset file(s); historical copies preserved.');
+    var cmd = String(command || '').trim().toLowerCase().replace(/\s+/g,' ');
+    if (cmd === 'help') { info('don_philter [run | help | mall-manager reprice | mall-manager clean | mall-manager sim reprice | mall-manager sim clean]'); return; }
+    if (/^(?:mall-manager )?(?:sim )?(?:reprice|clean)(?: sim)?$/.test(cmd)) {
+        var op = cmd.replace(/^mall-manager /,'');
+        info('don_philter | delegate mall-manager ' + op);
+        if (!kolmafia.cliExecute('mall-manager ' + op)) error('Mall Manager failed; install donCannoli-burns/mall-manager.');
+        return;
+    }
+    if (cmd && cmd !== 'run') { error('Unknown argument: ' + command); return; }
+    if (!kolmafia.userConfirm('don_philter cleanup: Yes=proceed immediately; No=hard stop; defaults Yes after 30 seconds.', 30000, true)) {
+        error('don_philter | HARD STOP. No cleanup performed.'); return;
+    }
     if (!canInteractCheck()) {
         error("Whoa! Don't run this until you break the prism!");
         return;
     }
+    info('don_philter | cleanup started');
     var meatGain = philter(Object.freeze(loadCleanupConfig()));
     if (meatGain < 0) {
         error('Philter was unable to cleanse your inventory.');
@@ -1964,7 +1988,7 @@ function main() {
     else if (meatGain === 0)
         { warn('Nothing to do. I foresee no additional meat in your future.'); }
     else {
-        success(("Anticipated monetary gain from inventory cleansing: " + (zlib_ash.rnum(meatGain)) + " meat."));
+        success(("don_philter | complete | expected gain: " + (zlib_ash.rnum(meatGain)) + " Meat."));
     }
 }
 

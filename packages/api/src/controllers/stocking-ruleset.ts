@@ -20,7 +20,7 @@ import {getFullStockFileName} from './philter-config';
 export function loadStockingRulesetForCurrentPlayer() {
   return loadStockingRulesetFile(
     getFullStockFileName(getvar(CONFIG_NAMES.stockFileName))
-  );
+  ) || loadStockingRulesetFile(`OCDstock_${getvar(CONFIG_NAMES.stockFileName)}.txt`);
 }
 
 /**

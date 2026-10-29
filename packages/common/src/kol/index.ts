@@ -7,6 +7,7 @@
 export * from './check-update.js';
 export * from './cleanup-ruleset.js';
 export * from './cleanup.js';
+export * from './don-migrate.js';
 export * from './config.js';
 export * as logger from './logger.js';
 export * from './stocking-ruleset.js';

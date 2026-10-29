@@ -6,9 +6,11 @@ import {
 import {
   checkProjectUpdates,
   logger,
+  migrateLegacyData,
   setDefaultConfig,
 } from '@philter/common/kol';
 import {formFields, gametimeToInt, myName, write} from 'kolmafia';
+import {getvar} from 'zlib.ash';
 import {routes} from './routes';
 import {createRouter} from './typed-router';
 import {formatDateClf} from './util';
@@ -76,6 +78,7 @@ export function main() {
   const startTime = gametimeToInt();
 
   setDefaultConfig();
+  migrateLegacyData(getvar('BaleOCD_DataFile'), getvar('BaleOCD_StockFile'));
   checkProjectUpdates();
 
   let requestParameters;

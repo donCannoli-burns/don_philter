@@ -4,6 +4,7 @@ import {
   historicalAge,
   historicalPrice,
   mallPrice,
+  getProperty,
   print,
   putShop,
   userConfirm,
@@ -78,10 +79,10 @@ function printMallAndMakePriceCache(
       messages.push(msg);
     }
 
-    logger.info(com + messages.join(', '));
-    // TODO: Don't print line value when sending to mall multi
-    logger.info(`Sale price for this line: ${rnum(lineValue)}`);
-    logger.info(' ');
+    if (config.simulateOnly || getProperty('don_philterVerbose') === 'true') {
+      logger.info(com + messages.join(', '));
+      logger.info(`Sale price for this line: ${rnum(lineValue)}`);
+    }
     finalSale += lineValue;
   }
 

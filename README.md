@@ -169,3 +169,24 @@ It is not used when `ocd_control()` is called from another script.
 - Original OCD Inventory Control repository: https://sourceforge.net/projects/ocd.bale.p/
 
 [zlib]: https://kolmafia.us/threads/zlib-zarqons-useful-function-library.2072
+
+
+## don_philter fork (2026-10-28)
+
+The unchanged upstream baseline is archived on branch `archive/upstream_philter-20261028`. This fork never auto-updates legacy SVN scripts. For backwards compatibility the `BaleOCD_*` ZLib settings remain readable.
+
+- `don_philter` (or `philter`) runs cleanup. Yes starts immediately; No hard-stops; 30 seconds without response defaults Yes. Ronin/Hardcore is checked separately.
+- `don_philter help` lists commands. `don_philter mall-manager reprice`, `don_philter mall-manager clean`, and `don_philter mall-manager sim reprice` / `sim clean` forward **only** to the independently installed [Mall Manager](https://github.com/donCannoli-burns/mall-manager). Ordinary cleanup never triggers these store commands.
+- On first run or first relay opening, data files such as `OCDdata_<name>.txt` and `OCDstock_<name>.txt` are **copied** into `don_data_<name>.txt` and `don_stock_<name>.txt`. Historical copies are saved as `don_archive_data_<name>.txt` and `don_archive_stock_<name>.txt`; originals are not deleted or changed. Existing populated don_ files are never overwritten. Older `OCD_<character>_Data.txt` is also recognized.
+- Default `set don_philterVerbose=false` reduces duplicate planning lists; `true` restores details. KoLmafia still prints actual item action results.
+- `set don_mallManagerHighlight=2000000` sets the high-value item highlight threshold in the relay editor (strictly greater; default two million Meat). Historical mall prices are 5th-lowest reference values, **not** guaranteed real lowest listings.
+
+Checkout this feature branch for testing:
+
+```text
+git checkout https://github.com/donCannoli-burns/don_philter.git feature/don-philter-recovery-20261028
+verify don_philter.js
+don_philter help
+```
+
+**First-run safety:** verify the copied don_ files; use `zlib BaleOCD_Sim = true` for a non-mutating simulation before running cleanup live. Do not remove locally installed upstream rule files until you have independently backed them up and compared the copies.
