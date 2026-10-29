@@ -1866,8 +1866,18 @@ function doPhilter(config) {
     var plan = planner.makePlan(cleanupRules, stockingRules);
     if (!plan)
         { return { success: false, finalSale: finalSale }; }
-    for (var actionFunc of actions) {
-        var result = actionFunc(plan, config);
+    var stageNames = ['BREAK', 'CRAFT', 'UNTINKER', 'USE', 'PULVERIZE', 'MALL',
+        'AUTOSELL', 'DISCARD', 'DISPLAY', 'CLOSET', 'STASH', 'GIFT'];
+    for (var index = 0; index < actions.length; index++) {
+        var stageCounts = [plan.breakBricko.size, plan.make.size, plan.untinker.size,
+            plan.use.size, 0, plan.mallsell.size, plan.autosell.size,
+            plan.discard.size, plan.displayCase.size, plan.closet.size,
+            plan.clanStash.size, plan.gift.size];
+        if (stageCounts[index] > 0) {
+            info('don_philter | ' + (config.simulateOnly ? 'SIM' : 'RUN') + ' | ' +
+                 stageNames[index] + ' | ' + stageCounts[index] + ' item types');
+        }
+        var result = actions[index](plan, config);
         finalSale += result.profit;
         if (result.shouldReplan) {
             plan = planner.makePlan(cleanupRules, stockingRules);

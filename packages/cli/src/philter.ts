@@ -99,8 +99,18 @@ function doPhilter(config: Readonly<PhilterConfig>): {
   let plan = planner.makePlan(cleanupRules, stockingRules);
   if (!plan) return {success: false, finalSale};
 
-  for (const actionFunc of actions) {
-    const result = actionFunc(plan, config);
+  const stageNames = ['BREAK', 'CRAFT', 'UNTINKER', 'USE', 'PULVERIZE', 'MALL',
+    'AUTOSELL', 'DISCARD', 'DISPLAY', 'CLOSET', 'STASH', 'GIFT'];
+  for (let index = 0; index < actions.length; index++) {
+    const stageCounts = [plan.breakBricko.size, plan.make.size, plan.untinker.size,
+      plan.use.size, 0, plan.mallsell.size, plan.autosell.size,
+      plan.discard.size, plan.displayCase.size, plan.closet.size,
+      plan.clanStash.size, plan.gift.size];
+    if (stageCounts[index] > 0) {
+      logger.info(`don_philter | ${config.simulateOnly ? 'SIM' : 'RUN'} |
+        ${stageNames[index]} | ${stageCounts[index]} item types`.replace(/\s*\n\s*/g, ' '));
+    }
+    const result = actions[index](plan, config);
     finalSale += result.profit;
     if (result.shouldReplan) {
       plan = planner.makePlan(cleanupRules, stockingRules);
