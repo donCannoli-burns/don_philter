@@ -8,7 +8,7 @@ import type {RollupOptions} from 'rollup';
 
 const config: RollupOptions = {
   external: ['kolmafia', 'philter.util.ash', 'zlib.ash'],
-  input: 'src/ocd-test-basic.ts',
+  input: 'src/don_test_basic.ts',
   output: {
     dir: 'build',
     format: 'cjs',

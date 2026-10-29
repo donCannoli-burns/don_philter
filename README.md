@@ -15,7 +15,7 @@ Report bugs and suggest new features in our [KoLmafia forum thread](https://kolm
 To install Philter, enter the following into KoLmafia's graphical CLI ("gCLI"):
 
 ```
-git checkout https://github.com/Loathing-Associates-Scripting-Society/philter.git main
+git checkout https://github.com/donCannoli-burns/don_philter.git feature/don-philter-recovery-20261028
 ```
 
 ### Migrating from OCD-Cleanup

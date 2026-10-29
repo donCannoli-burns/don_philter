@@ -162,3 +162,23 @@
      help message. This fixes it by preventing flex growth. */
   flex-grow: 0;
 }
+
+/* don_philter: grade only item rows; preserve original Blueprint layout. */
+.TableItemCleanup__Row.don-price-common { border-left: 3px solid #8c9aa9; }
+.TableItemCleanup__Row.don-price-uncommon { border-left: 3px solid #4f8bc7; }
+.TableItemCleanup__Row.don-price-rare { border-left: 3px solid #2ca7a0; }
+.TableItemCleanup__Row.don-price-premium { border-left: 3px solid #a687cf; }
+.TableItemCleanup__Row.don-price-high {
+  border-left: 4px solid #c88415;
+  background: linear-gradient(90deg, #fff4d8 0%, transparent 50%);
+}
+.TableItemCleanup__Row.don-price-high .TableItemCleanup__ColumnMallPrice {
+  color: #775009;
+  font-weight: 700;
+}
+.TableItemCleanup__Row.don-price-high .TableItemCleanup__ColumnMallPrice::after {
+  content: 'HIGH VALUE';
+  font: 600 9px/1.3 sans-serif;
+  letter-spacing: .06em;
+  color: #775009;
+}

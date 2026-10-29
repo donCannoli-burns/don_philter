@@ -1,5 +1,5 @@
 // OCD Inventory by Bale
-script "ocd-cleanup.ash";
+script "don_legacy_cleanup.ash";
 import "zlib.ash";
 import "relay/philter-manager-classic/philter.util.ash";
 
@@ -179,7 +179,7 @@ int ocd_control(boolean StopForMissingItems, string extraData) {
 		// Use a temporary map to avoid touching ocd_rules until we need to
 		OCDinfo [item] ocd_rules_temp;
 		if (
-			!file_to_map(`OCDdata_{getvar("BaleOCD_DataFile")}.txt`, ocd_rules_temp) &&
+			!file_to_map(`don_data_{getvar("BaleOCD_DataFile")}.txt`, ocd_rules_temp) &&
 			!file_to_map(`OCD_{my_name()}_Data.txt`, ocd_rules_temp)
 		) {
 			return vprint("Something went wrong trying to load OCDdata!", _ocd_color_error(), -1);
@@ -1172,7 +1172,7 @@ int ocd_control(boolean StopForMissingItems, string extraData) {
 	boolean ocd_inventory(boolean StopForMissingItems) {
 		OCDinfo [item] ocd_rules;
 		if (!load_OCD(ocd_rules, extraData)) return false;
-		if((!file_to_map("OCDstock_"+getvar("BaleOCD_StockFile")+".txt", stock) || count(stock) == 0)
+		if((!file_to_map("don_stock_"+getvar("BaleOCD_StockFile")+".txt", stock) || count(stock) == 0)
 		  && getvar("BaleOCD_Stock") == "1") {
 			print("You are missing item stocking information.", _ocd_color_error());
 			return false;
