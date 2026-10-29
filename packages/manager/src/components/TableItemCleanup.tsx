@@ -461,9 +461,17 @@ export const TableItemCleanup = memo(function TableItemCleanup({
   );
 
   const rowClassNameGetter = useCallback(
-    ({index}: {index: number}) =>
-      index === -1 ? 'TableItemCleanup__HeaderRow' : 'TableItemCleanup__Row',
-    []
+    ({index}: {index: number}) => {
+      if (index === -1) return 'TableItemCleanup__HeaderRow';
+      const price = finalItems[index]?.mallPrice || 0;
+      const param = new URLSearchParams(window.location.search).get('donMallManagerHighlight');
+      const parsed = Number(param);
+      const high = Number.isFinite(parsed) && parsed > 0 ? parsed : 2000000;
+      const tier = price > high ? 'high' : price > 100000 ? 'premium'
+        : price > 10000 ? 'rare' : price > 1000 ? 'uncommon' : 'common';
+      return classNames('TableItemCleanup__Row', 'don-price-' + tier);
+    },
+    [finalItems]
   );
 
   /** Helper function for making `<Column/>` elements. */

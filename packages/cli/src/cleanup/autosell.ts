@@ -1,11 +1,11 @@
 import {logger} from '@philter/common/kol';
-import {autosell, autosellPrice} from 'kolmafia';
+import {autosell, autosellPrice, getProperty} from 'kolmafia';
 import {assert} from 'kolmafia-util';
 import {rnum} from 'zlib.ash';
 import {splitItemsSorted} from '../util';
 import {CleanupActionFunction, safeBatchItems} from './base';
 
-function printAutosell(items: ReadonlyMap<Item, number>): number {
+function printAutosell(items: ReadonlyMap<Item, number>, verbose: boolean): number {
   let expectedProfitTotal = 0;
 
   for (const chunk of splitItemsSorted(items, 11)) {
@@ -17,8 +17,7 @@ function printAutosell(items: ReadonlyMap<Item, number>): number {
       messages.push(`${amount} ${item}`);
     }
 
-    logger.info(`autosell ${messages.join(', ')}`);
-    logger.info(' ');
+    if (verbose) logger.info(`autosell ${messages.join(', ')}`);
     expectedProfitTotal += lineValue;
   }
 
@@ -33,7 +32,7 @@ export const cleanupAutosell: CleanupActionFunction = (plan, config) => {
   const items = plan.autosell;
   if (items.size === 0) return {shouldReplan: false, profit: 0};
 
-  const profit = printAutosell(items);
+  const profit = printAutosell(items, config.simulateOnly || getProperty('don_philterVerbose') === 'true');
   if (!config.simulateOnly) {
     safeBatchItems(
       items,

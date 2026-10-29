@@ -1,11 +1,11 @@
 // Relay OCD Inventory dB Manager by Bale
 
 since r18040; // When you define a map with value as a zero-length array, file_to_map can now populate it
-import "ocd-cleanup.ash";
+import "don_legacy_cleanup.ash";
 
 OCDinfo [item] OCD;
 OCDinfo [item] OCDefault;
-file_to_map("ocd-cleanup-default.txt", OCDefault);
+file_to_map("don_cleanup_default.txt", OCDefault);
 
 record {
 	string type;
@@ -181,14 +181,14 @@ void styles() {
 
 void load_OCD() {
 	if(count(fields) > 0) return;
-	string OCDfile = "OCDdata_"+getvar("BaleOCD_DataFile")+".txt";
+	string OCDfile = "don_data_"+getvar("BaleOCD_DataFile")+".txt";
 	string OCDfileOld = "OCD_"+my_name()+"_Data.txt";
 	if((!file_to_map(OCDfile, OCD) || count(OCD) == 0) && (!file_to_map(OCDfileOld, OCD) || count(OCD) == 0))
 		print(
 			"All item information is corrupted or missing. Either you have not yet saved any item data or you lost it.",
 			_ocd_color_error()
 		);
-	if((!file_to_map("OCDstock_"+getvar("BaleOCD_StockFile")+".txt", stock) || count(stock) == 0) && getvar("BaleOCD_Stock") == "1") {
+	if((!file_to_map("don_stock_"+getvar("BaleOCD_StockFile")+".txt", stock) || count(stock) == 0) && getvar("BaleOCD_Stock") == "1") {
 		print(
 			"All item stocking information is corrupted or missing. Either you have not yet saved any item stocking data or you lost it.",
 			_ocd_color_error()
@@ -343,7 +343,7 @@ void save_ocd() {
 			break;
 		}
 	if(OCD contains $item[none]) remove OCD[$item[none]];
-	map_to_file(OCD, "OCDdata_"+getvar("BaleOCD_DataFile")+".txt");
+	map_to_file(OCD, "don_data_"+getvar("BaleOCD_DataFile")+".txt");
 }
 
 /**
@@ -654,7 +654,7 @@ void stock_items() {
 	page.append("<table border=0 cellpadding=1><tr><td align=right>");
 	if(write_button("stocknew", " New ")) {
 		clear(stock);
-		if(!file_to_map("ocd-cleanup-stock.txt", stock) || count(stock) == 0)
+		if(!file_to_map("don_cleanup_stock.txt", stock) || count(stock) == 0)
 			print("Error loading default stock data.", _ocd_color_error());
 	}
 	page.append("</td><td>Create a default stock list for softcore pulls!</td></tr>");
@@ -665,7 +665,7 @@ void stock_items() {
 			foreach key in fields
 				if(key.contains_text("stock_"))
 					remove fields[key];
-			map_to_file(stock, "OCDstock_"+getvar("BaleOCD_StockFile")+".txt");
+			map_to_file(stock, "don_stock_"+getvar("BaleOCD_StockFile")+".txt");
 		}
 		page.append("</td><td>Delete <i>all</i> entries in the following list!</td></tr>");
 	}
@@ -787,11 +787,11 @@ void zlib_vars() {
 	vars["BaleOCD_UseMallMulti"] = write_check(getvar("BaleOCD_UseMallMulti"), "UseMulti", "Use Mall Multi");
 	page.append("</td></tr></table>");
 
-	page.append("<p class='zlib'>Data file: OCDdata_");
+	page.append("<p class='zlib'>Data file: don_data_");
 	vars["BaleOCD_DataFile"] = write_field(getvar("BaleOCD_DataFile"), "DataFile", 10);
 	if(getvar("BaleOCD_DataFile") == "")
 		vars["BaleOCD_DataFile"] = my_name();
-	page.append("<br />Stock file: OCDstock_");
+	page.append("<br />Stock file: don_stock_");
 	vars["BaleOCD_StockFile"] = write_field(getvar("BaleOCD_StockFile"), "StockFile", 10);
 	if(getvar("BaleOCD_StockFile") == "")
 		vars["BaleOCD_StockFile"] = my_name();
@@ -1033,7 +1033,7 @@ void main() {
 				remove fields["newt_"+i];
 			}
 		clear(newstock1);
-		map_to_file(stock, "OCDstock_"+getvar("BaleOCD_StockFile")+".txt");
+		map_to_file(stock, "don_stock_"+getvar("BaleOCD_StockFile")+".txt");
 		updatevars();
 		vprint("Item(s) have been categorized.", _ocd_color_success(), 3);
 		page.append("<div style='font-weight:bold; color:blue;'>Last save @ ");

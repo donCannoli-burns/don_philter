@@ -1,6 +1,6 @@
 import {PhilterConfig} from '@philter/common';
 import {logger} from '@philter/common/kol';
-import {batchClose, batchOpen, itemAmount} from 'kolmafia';
+import {batchClose, batchOpen, getProperty, itemAmount} from 'kolmafia';
 import {assert} from 'kolmafia-util';
 import {CleanupPlan} from '../planner';
 import {grouper, splitItemsSorted} from '../util';
@@ -98,8 +98,8 @@ export function cleanupSimple<T extends ItemData>({
         : '';
       messages.push(`${amount} ${item}${itemSuffix}`);
     }
-    logger.info(`${commandPrefix} ${messages.join(', ')}`);
-    logger.info(' ');
+    if (config.simulateOnly || getProperty('don_philterVerbose') === 'true')
+      logger.info(`${commandPrefix} ${messages.join(', ')}`);
   }
 
   if (!config.simulateOnly) {

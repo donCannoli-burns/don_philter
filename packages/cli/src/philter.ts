@@ -43,6 +43,7 @@ function loadCurrentCleanupRules(dataFileName: string) {
   // Maybe we could remove it altogether
   const cleanupRules =
     loadCleanupRulesetFile(dataFileName) ||
+    loadCleanupRulesetFile(dataFileName.replace(/^don_data_/, 'OCDdata_')) ||
     loadCleanupRulesetFile(`OCD_${myName()}_Data.txt`);
   assert.ok(
     cleanupRules,
@@ -63,11 +64,11 @@ function doPhilter(config: Readonly<PhilterConfig>): {
   let finalSale = 0;
 
   const cleanupRules = loadCurrentCleanupRules(
-    `OCDdata_${config.dataFileName}.txt`
+    `don_data_${config.dataFileName}.txt`
   );
   let stockingRules = loadStockingRulesetFile(
-    `OCDstock_${config.stockFileName}.txt`
-  );
+    `don_stock_${config.stockFileName}.txt`
+  ) || loadStockingRulesetFile(`OCDstock_${config.stockFileName}.txt`);
   if (!stockingRules) {
     if (getvar('BaleOCD_Stock') === '1') {
       assert.fail('You are missing item stocking information.');
@@ -98,8 +99,18 @@ function doPhilter(config: Readonly<PhilterConfig>): {
   let plan = planner.makePlan(cleanupRules, stockingRules);
   if (!plan) return {success: false, finalSale};
 
-  for (const actionFunc of actions) {
-    const result = actionFunc(plan, config);
+  const stageNames = ['BREAK', 'CRAFT', 'UNTINKER', 'USE', 'PULVERIZE', 'MALL',
+    'AUTOSELL', 'DISCARD', 'DISPLAY', 'CLOSET', 'STASH', 'GIFT'];
+  for (let index = 0; index < actions.length; index++) {
+    const stageCounts = [plan.breakBricko.size, plan.make.size, plan.untinker.size,
+      plan.use.size, 0, plan.mallsell.size, plan.autosell.size,
+      plan.discard.size, plan.displayCase.size, plan.closet.size,
+      plan.clanStash.size, plan.gift.size];
+    if (stageCounts[index] > 0) {
+      logger.info(`don_philter | ${config.simulateOnly ? 'SIM' : 'RUN'} |
+        ${stageNames[index]} | ${stageCounts[index]} item types`.replace(/\s*\n\s*/g, ' '));
+    }
+    const result = actions[index](plan, config);
     finalSale += result.profit;
     if (result.shouldReplan) {
       plan = planner.makePlan(cleanupRules, stockingRules);

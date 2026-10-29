@@ -2,9 +2,10 @@ import {
   checkProjectUpdates,
   loadCleanupConfig,
   logger,
+  migrateLegacyData,
   setDefaultConfig,
 } from '@philter/common/kol';
-import {canInteract, userConfirm, wait} from 'kolmafia';
+import {canInteract, cliExecute, userConfirm} from 'kolmafia';
 import {getvar, rnum} from 'zlib.ash';
 import {philter} from './philter';
 
@@ -28,34 +29,30 @@ function canInteractCheck(): boolean {
 
 // TODO: Parse CLI arguments, merge them with ZLib configs, and make the rest of
 // the app use the merged config instead of accessing settings directly.
-export function main(): void {
-  // TODO: Remove this warning when ocd-cleanup.ash is deprecated
-  logger.warn(
-    'Philter.js is currently in alpha. It may contain bugs which could destroy your items.'
-  );
-  logger.warn(
-    "If you want to stay on the safe side, halt this script and run 'ocd-cleanup.ash' instead."
-  );
-  wait(10);
-
+export function main(command = ''): void {
   setDefaultConfig();
-  checkProjectUpdates();
-
-  if (!canInteractCheck()) {
-    logger.error("Whoa! Don't run this until you break the prism!");
+  const copies = migrateLegacyData(getvar('BaleOCD_DataFile'), getvar('BaleOCD_StockFile'));
+  if (copies) logger.success(`Recovered ${copies} upstream file(s), with archived copies.`);
+  const cmd = String(command || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  if (cmd === 'help') {
+    logger.info('don_philter [run | help | mall-manager reprice | mall-manager clean | mall-manager sim reprice | mall-manager sim clean]');
     return;
   }
-
-  const meatGain = philter(Object.freeze(loadCleanupConfig()));
-  if (meatGain < 0) {
-    logger.error('Philter was unable to cleanse your inventory.');
-  } else if (meatGain === 0)
-    logger.warn('Nothing to do. I foresee no additional meat in your future.');
-  else {
-    logger.success(
-      `Anticipated monetary gain from inventory cleansing: ${rnum(
-        meatGain
-      )} meat.`
-    );
+  if (/^(?:mall-manager )?(?:sim )?(?:reprice|clean)(?: sim)?$/.test(cmd)) {
+    const op = cmd.replace(/^mall-manager /, '');
+    logger.info(`don_philter | delegate mall-manager ${op}`);
+    if (!cliExecute(`mall-manager ${op}`)) logger.error('Mall Manager command failed; install donCannoli-burns/mall-manager.');
+    return;
   }
+  if (cmd && cmd !== 'run') { logger.error(`Unknown argument: ${command}`); return; }
+  if (!userConfirm('don_philter cleanup: Yes=proceed immediately; No=hard stop; defaults Yes after 30 seconds.', 30000, true)) {
+    logger.error('don_philter | HARD STOP. No cleanup performed.');
+    return;
+  }
+  if (!canInteractCheck()) { logger.error('Ronin/Hardcore gate blocked cleanup.'); return; }
+  logger.info('don_philter | cleanup started');
+  const meatGain = philter(Object.freeze(loadCleanupConfig()));
+  if (meatGain < 0) logger.error('don_philter | cleanup failed');
+  else if (meatGain === 0) logger.warn('don_philter | complete | no estimated gain');
+  else logger.success(`don_philter | complete | expected gain: ${rnum(meatGain)} Meat`);
 }

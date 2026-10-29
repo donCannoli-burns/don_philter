@@ -25,7 +25,9 @@ export function loadCleanupRulesetForCurrentPlayer() {
     // Legacy file name
     // TODO: We inherited this from OCD Inventory Manager. Since nobody seems to
     // be using this anymore, we can probably remove it.
-    cleanupRulesMap = loadCleanupRulesetFile(`OCD_${myName()}.txt`);
+    cleanupRulesMap = loadCleanupRulesetFile(`OCDdata_${getvar(CONFIG_NAMES.dataFileName)}.txt`) ||
+      loadCleanupRulesetFile(`OCD_${myName()}_Data.txt`) ||
+      loadCleanupRulesetFile(`OCD_${myName()}.txt`);
   }
   return cleanupRulesMap;
 }

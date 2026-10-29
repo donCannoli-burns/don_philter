@@ -134,20 +134,7 @@ function debug(message) {
     zlib_ash.vprint(message, '#808080', 6);
 }
 
-function checkProjectUpdates() {
-    // Check version! This will check both scripts and data files.
-    // This code is at base level so that the relay script's importation will automatically cause it to be run.
-    var PROJECT_NAME = 'Loathing-Associates-Scripting-Society-philter-trunk-release';
-    if (kolmafia.svnExists(PROJECT_NAME) &&
-        kolmafia.getProperty('_svnUpdated') === 'false' &&
-        kolmafia.getProperty('_ocdUpdated') !== 'true') {
-        if (!kolmafia.svnAtHead(PROJECT_NAME)) {
-            warn('Philter has become outdated. Automatically updating from SVN...');
-            kolmafia.cliExecute(("svn update " + PROJECT_NAME));
-            success("On the script's next invocation it will be up to date.");
-        }
-        kolmafia.setProperty('_ocdUpdated', 'true');
-    }
+function checkProjectUpdates() { /* don_philter uses git update; no upstream SVN writes */ 
 }
 
 /**
@@ -472,14 +459,14 @@ function saveStockingRulesetFile(filepath, stockingRulesMap) {
  * file extension.
  */
 function getFullDataFileName(fileNameComponent) {
-    return ("OCDdata_" + fileNameComponent + ".txt");
+    return ("don_data_" + fileNameComponent + ".txt");
 }
 /**
  * Get the full file name of a cleanup stocking ruleset file, including the
  * prefix and file extension.
  */
 function getFullStockFileName(fileNameComponent) {
-    return ("OCDstock_" + fileNameComponent + ".txt");
+    return ("don_stock_" + fileNameComponent + ".txt");
 }
 
 /**
@@ -496,7 +483,9 @@ function loadCleanupRulesetForCurrentPlayer() {
         // Legacy file name
         // TODO: We inherited this from OCD Inventory Manager. Since nobody seems to
         // be using this anymore, we can probably remove it.
-        cleanupRulesMap = loadCleanupRulesetFile(("OCD_" + (kolmafia.myName()) + ".txt"));
+        cleanupRulesMap = loadCleanupRulesetFile('OCDdata_' + zlib_ash.getvar(CONFIG_NAMES.dataFileName) + '.txt') ||
+            loadCleanupRulesetFile(("OCD_" + (kolmafia.myName()) + "_Data.txt")) ||
+            loadCleanupRulesetFile(("OCD_" + (kolmafia.myName()) + ".txt"));
     }
     return cleanupRulesMap;
 }
@@ -725,7 +714,8 @@ function toItemInfo(item) {
  *    file is empty or missing, returns `null`.
  */
 function loadStockingRulesetForCurrentPlayer() {
-    return loadStockingRulesetFile(getFullStockFileName(zlib_ash.getvar(CONFIG_NAMES.stockFileName)));
+    return loadStockingRulesetFile(getFullStockFileName(zlib_ash.getvar(CONFIG_NAMES.stockFileName))) ||
+        loadStockingRulesetFile('OCDstock_' + zlib_ash.getvar(CONFIG_NAMES.stockFileName) + '.txt');
 }
 
 /**
@@ -1483,6 +1473,32 @@ function generateRedirectPage(url) {
         "<body>If your browser does not redirect you immediately, <a href=\"" + url + "\">click here</a></body>" +
         '</html>');
 }
+function donMigrateLegacyData(dataName, stockName) {
+    var name = kolmafia.myName();
+    var plans = [
+        {target:'don_data_' + dataName + '.txt',backup:'don_archive_data_' + dataName + '.txt',
+         sources:['OCDdata_' + dataName + '.txt','OCD_' + name + '_Data.txt','OCD_' + name + '.txt']},
+        {target:'don_stock_' + stockName + '.txt',backup:'don_archive_stock_' + stockName + '.txt',
+         sources:['OCDstock_' + stockName + '.txt']}
+    ];
+    var copies = 0;
+    for (var plan of plans) {
+        if (kolmafia.fileToBuffer(plan.target).trim()) continue;
+        for (var oldFile of plan.sources) {
+            var oldData = kolmafia.fileToBuffer(oldFile);
+            if (!oldData.trim()) continue;
+            if (!kolmafia.fileToBuffer(plan.backup).trim() && !kolmafia.bufferToFile(oldData, plan.backup))
+                throw new Error('Cannot archive legacy data into ' + plan.backup);
+            if (!kolmafia.bufferToFile(oldData, plan.target))
+                throw new Error('Cannot migrate legacy data into ' + plan.target);
+            copies++;
+            break;
+        }
+    }
+    if (!kolmafia.getProperty('don_mallManagerHighlight')) kolmafia.setProperty('don_mallManagerHighlight','2000000');
+    if (!kolmafia.getProperty('don_philterVerbose')) kolmafia.setProperty('don_philterVerbose','false');
+    return copies;
+}
 function main() {
     // TODO: Add require() to kolmafia-types if possible
     // @ts-expect-error No require()
@@ -1491,7 +1507,7 @@ function main() {
     debug(("Started " + safeScriptPath + "..."));
     var startTime = kolmafia.gametimeToInt();
     setDefaultConfig();
-    checkProjectUpdates();
+    donMigrateLegacyData(zlib_ash.getvar('BaleOCD_DataFile'), zlib_ash.getvar('BaleOCD_StockFile'));
     var requestParameters;
     try {
         var router = createRouter(routes);
@@ -1500,7 +1516,7 @@ function main() {
             // If there are no URL parameters, this is probably a request made by a
             // user navigating to our app.
             // We send the HTML skeleton of the Philter Manager.
-            send(generateRedirectPage(RELAY_HTML_PATH));
+            send(generateRedirectPage(RELAY_HTML_PATH + '?donMallManagerHighlight=' + encodeURIComponent(kolmafia.getProperty('don_mallManagerHighlight'))));
         }
         else {
             send(router.resolve({
