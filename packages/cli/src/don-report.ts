@@ -29,7 +29,13 @@ export function main(command = 'help'): void {
   const action = parts.shift() || 'help';
   const allowed = new Set(['--quiet', '--print', '--diff', '--json']);
   if (
-    !['help', 'status', 'item_new', 'inventory_snapshot', 'verify-rules'].includes(action) ||
+    ![
+      'help',
+      'status',
+      'item_new',
+      'inventory_snapshot',
+      'verify-rules',
+    ].includes(action) ||
     parts.some(x => !allowed.has(x))
   ) {
     print('Don Philter report: unknown command, no cleanup executed.', 'red');
