@@ -11,6 +11,12 @@ jobs:
         with:
           node-version: "16"
       - run: yarn install --frozen-lockfile
+      - name: Preview ESLint autofix (temporary, no repository writeback)
+        run: |
+          ./node_modules/.bin/eslint packages/cli/src/don-report.ts --fix || true
+          echo "DONFMT_START:packages/cli/src/don-report.ts"
+          cat packages/cli/src/don-report.ts
+          echo "DONFMT_END:packages/cli/src/don-report.ts"
       - name: Build report and original Philter CLI in isolation
         run: yarn run build:cli
       - name: Lint
