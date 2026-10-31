@@ -169,3 +169,8 @@ It is not used when `ocd_control()` is called from another script.
 - Original OCD Inventory Control repository: https://sourceforge.net/projects/ocd.bale.p/
 
 [zlib]: https://kolmafia.us/threads/zlib-zarqons-useful-function-library.2072
+
+## Don Report v1 (fork-only, read-only)
+
+This fork adds a standalone, compiled `don_philter_report.js` entrypoint. Run `call don_philter_report.js inventory_snapshot --quiet` or `--print` / `--json` for local inventory quantities. `item_new --diff` deliberately returns **KNOWN_UNKNOWN** without a trusted previous receipt; it never invokes Philter's cleanup planner, item retrieval, mall listings, discard, gifts, or user confirmation. There is no automatic relay hook, file writer or notification yet. Canonical node addresses and source/relay toggles are governed by [Don KoLFix](https://github.com/donCannoli-burns/don_kolfix/blob/main/docs/don-report-v1.md). Probe JSON printed to gCLI is not a canonical journal record.
+
