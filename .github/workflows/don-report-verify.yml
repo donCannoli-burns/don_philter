@@ -11,6 +11,14 @@ jobs:
         with:
           node-version: "16"
       - run: yarn install --frozen-lockfile
+      - name: Preview exact ESLint autoformat (temporary)
+        run: |
+          ./node_modules/.bin/eslint packages/cli/src/index.ts packages/cli/src/don-report.ts packages/cli/src/verify-rules.ts tests/verify-rules.test.cjs --fix || true
+          for file in packages/cli/src/index.ts packages/cli/src/don-report.ts packages/cli/src/verify-rules.ts tests/verify-rules.test.cjs; do
+            echo "DONFMT_START:$file"
+            cat "$file"
+            echo "DONFMT_END:$file"
+          done
       - name: Build report and original Philter CLI in isolation
         run: yarn run build:cli
       - name: Exercise compiled parser in synthetic no-action KoLmafia runtime
