@@ -3,10 +3,9 @@ import buble from '@rollup/plugin-buble';
 import {nodeResolve} from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import createBubleConfig from 'buble-config-rhino';
-import type {RollupOptions} from 'rollup';
 
 // Separate bundle: cannot accidentally import the mutating philter entrypoint.
-const config: RollupOptions = {
+const config = {
   external: ['kolmafia', 'philter.util.ash', 'zlib.ash'],
   input: 'src/don-report.ts',
   output: {
