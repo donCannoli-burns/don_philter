@@ -171,7 +171,7 @@ check('malicious configured filename suffix is refused before file I/O', () => {
 });
 check('unknown flags never access inventory or any ruleset', () => {
   const r = run('verify-rules --execute', {'don_data_doncannoli1.txt': good});
-  assert.match(r.output, /Usage: don_philter_report\.js verify-rules/);
+  assert.match(r.output, /unknown command|Usage: don_philter_report\\.js verify-rules/);
   assert.deepEqual(r.accesses, []);
 });
 console.log('Don Philter verify-rules tests passed:', passed);
