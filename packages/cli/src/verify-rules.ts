@@ -12,7 +12,6 @@ import {
 import {fileToArray, print, toInt} from 'kolmafia';
 import {getvar} from 'zlib.ash';
 
-type RulesetKind = 'cleanup' | 'stock';
 type Candidate = {filename: string; legacy: boolean};
 type FileRows = {filename: string; entries: string[]; count: number};
 export interface VerificationResult {
@@ -40,9 +39,7 @@ function validSuffix(value: string): boolean {
 
 function fileRows(filename: string): FileRows {
   const raw = fileToArray(filename);
-  const entries = Object.keys(raw).map(
-    key => raw[key as unknown as number]
-  );
+  const entries = Object.keys(raw).map(key => raw[key as unknown as number]);
   return {filename, entries, count: entries.length};
 }
 
@@ -83,8 +80,11 @@ function failureMessage(error: unknown): string {
     if (msg.includes('Invalid minimum price')) return 'Invalid MALL price';
     if (msg.includes('Invalid keep amount')) return 'Invalid keep quantity';
     if (msg.includes('Invalid stock-up amount')) return 'Invalid stock amount';
-    if (msg.startsWith('Unexpected field count') ||
-        msg.startsWith('Ruleset exceeds')) return msg;
+    if (
+      msg.startsWith('Unexpected field count') ||
+      msg.startsWith('Ruleset exceeds')
+    )
+      return msg;
   }
   return 'Philter parser rejected one or more records';
 }
@@ -132,7 +132,10 @@ export function verifyRules(quiet = false): VerificationResult {
   result.cleanupFile = cleanup.candidate.filename;
   print(`Selected cleanup file: ${result.cleanupFile}`);
   if (cleanup.candidate.legacy) {
-    print('LEGACY FALLBACK: no usable don_data_ file found; no migration performed.', 'orange');
+    print(
+      'LEGACY FALLBACK: no usable don_data_ file found; no migration performed.',
+      'orange'
+    );
   }
 
   try {
@@ -163,7 +166,10 @@ export function verifyRules(quiet = false): VerificationResult {
       result.stockingFile = stocking.candidate.filename;
       print(`Selected stocking file: ${result.stockingFile}`);
       if (stocking.candidate.legacy) {
-        print('LEGACY STOCK FALLBACK: read only; no migration performed.', 'orange');
+        print(
+          'LEGACY STOCK FALLBACK: read only; no migration performed.',
+          'orange'
+        );
       }
       checkFieldWidth(stocking.rows, 4);
       const parsedStock = loadStockingRulesetFile(result.stockingFile);
@@ -171,7 +177,8 @@ export function verifyRules(quiet = false): VerificationResult {
         throw new Error('Parsed stocking record count does not match source');
       }
       for (const item of parsedStock.keys()) {
-        if (toInt(item) <= 0) throw new Error('Unrecognized stock item identifier');
+        if (toInt(item) <= 0)
+          throw new Error('Unrecognized stock item identifier');
       }
       result.stockingCount = parsedStock.size;
     } else {
@@ -193,9 +200,15 @@ export function verifyRules(quiet = false): VerificationResult {
 
   result.ok = true;
   print(
-    `VERIFY-RULES PASS: ${result.cleanupCount} cleanup records, ${result.stockingCount} stock records; automatic stocking ${stockEnabled ? 'ENABLED' : 'disabled'}.`,
+    `VERIFY-RULES PASS: ${result.cleanupCount} cleanup records, ${
+      result.stockingCount
+    } stock records; automatic stocking ${
+      stockEnabled ? 'ENABLED' : 'disabled'
+    }.`,
     'green'
   );
-  print('Read-only verification. NO inventory refresh, cleanup, transfers or saved file changes.');
+  print(
+    'Read-only verification. NO inventory refresh, cleanup, transfers or saved file changes.'
+  );
   return result;
 }
