@@ -80,7 +80,7 @@ function run(args, files = {}, preferences = {}, compiled = reporterBundle) {
       throw new Error('Unexpected module import: ' + name);
     },
     console,
-    Item: {get: item},
+    Item: {get: value => Array.isArray(value) ? value.map(item) : item(value)},
   };
   vm.runInNewContext(compiled, context, {timeout: 5000});
   assert.equal(typeof mod.exports.main, 'function');
