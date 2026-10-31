@@ -3,7 +3,14 @@
  * It must NEVER import ./philter, ./planner or any cleanup action modules.
  * No purchases, movement, cleanup, user prompts, or preference writes.
  */
-import {getInventory, myAscensions, myId, print, todayToString, toInt} from 'kolmafia';
+import {
+  getInventory,
+  myAscensions,
+  myId,
+  print,
+  todayToString,
+  toInt,
+} from 'kolmafia';
 import {toItemMap} from '@philter/common/kol';
 
 export interface InventoryProbe {
@@ -20,8 +27,10 @@ export function main(command = 'help'): void {
   const parts = command.trim().split(/\s+/).filter(Boolean);
   const action = parts.shift() || 'help';
   const allowed = new Set(['--quiet', '--print', '--diff', '--json']);
-  if (!['help', 'status', 'item_new', 'inventory_snapshot'].includes(action) ||
-      parts.some(x => !allowed.has(x))) {
+  if (
+    !['help', 'status', 'item_new', 'inventory_snapshot'].includes(action) ||
+    parts.some(x => !allowed.has(x))
+  ) {
     print('Don Philter report: unknown command, no cleanup executed.', 'red');
     return;
   }
@@ -36,15 +45,29 @@ export function main(command = 'help'): void {
   }
   const scope = `${myId()}:${todayToString()}:${myAscensions()}`;
   if (action === 'item_new' || parts.includes('--diff')) {
-    print('KNOWN_UNKNOWN: a verified prior inventory receipt is required for new-item detection.', 'orange');
+    print(
+      'KNOWN_UNKNOWN: a verified prior inventory receipt is required for new-item detection.',
+      'orange'
+    );
     if (action === 'item_new') return;
   }
   const inventory = collectInventory();
   if (parts.includes('--json')) {
-    print(JSON.stringify({schema:'don-inventory-probe-v1',source:'philter',scope,inventory}));
+    print(
+      JSON.stringify({
+        schema: 'don-inventory-probe-v1',
+        source: 'philter',
+        scope,
+        inventory,
+      })
+    );
   } else if (!parts.includes('--quiet') || parts.includes('--print')) {
     for (const item of inventory)
-      print(`donstate:v1:${scope}:inventory:item/${item.itemId}:quantity = ${item.quantity}`);
+      print(
+        `donstate:v1:${scope}:inventory:item/${item.itemId}:quantity = ${item.quantity}`
+      );
   }
-  print(`Philter read-only: ${inventory.length} distinct inventory items; no cleanup performed.`);
+  print(
+    `Philter read-only: ${inventory.length} distinct inventory items; no cleanup performed.`
+  );
 }
