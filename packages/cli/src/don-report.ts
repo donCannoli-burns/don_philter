@@ -12,6 +12,7 @@ import {
   toInt,
 } from 'kolmafia';
 import {toItemMap} from '@philter/common/kol';
+import {verifyRules} from './verify-rules';
 
 export interface InventoryProbe {
   itemId: number;
@@ -28,7 +29,7 @@ export function main(command = 'help'): void {
   const action = parts.shift() || 'help';
   const allowed = new Set(['--quiet', '--print', '--diff', '--json']);
   if (
-    !['help', 'status', 'item_new', 'inventory_snapshot'].includes(action) ||
+    !['help', 'status', 'item_new', 'inventory_snapshot', 'verify-rules'].includes(action) ||
     parts.some(x => !allowed.has(x))
   ) {
     print('Don Philter report: unknown command, no cleanup executed.', 'red');
@@ -37,6 +38,15 @@ export function main(command = 'help'): void {
   if (action === 'help') {
     print('don_philter_report.js inventory_snapshot [--quiet|--print|--json]');
     print('don_philter_report.js item_new [--diff] (requires prior receipt)');
+    print('don_philter_report.js verify-rules [--quiet] (read-only parser)');
+    return;
+  }
+  if (action === 'verify-rules') {
+    if (parts.some(flag => flag !== '--quiet')) {
+      print('Usage: don_philter_report.js verify-rules [--quiet]', 'red');
+      return;
+    }
+    verifyRules(parts.includes('--quiet'));
     return;
   }
   if (action === 'status') {
