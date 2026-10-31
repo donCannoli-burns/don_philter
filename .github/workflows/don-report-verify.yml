@@ -13,5 +13,7 @@ jobs:
       - run: yarn install --frozen-lockfile
       - name: Build report and original Philter CLI in isolation
         run: yarn run build:cli
+      - name: Exercise compiled parser in synthetic no-action KoLmafia runtime
+        run: node tests/verify-rules.test.cjs
       - name: Lint
         run: yarn run lint

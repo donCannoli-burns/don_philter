@@ -7,6 +7,7 @@ import {
 import {canInteract, userConfirm, wait} from 'kolmafia';
 import {getvar, rnum} from 'zlib.ash';
 import {philter} from './philter';
+import {verifyRules} from './verify-rules';
 
 /**
  * Check if your character is in Ronin/Hardcore. If so, ask for confirmation to
@@ -28,7 +29,18 @@ function canInteractCheck(): boolean {
 
 // TODO: Parse CLI arguments, merge them with ZLib configs, and make the rest of
 // the app use the merged config instead of accessing settings directly.
-export function main(): void {
+export function main(command = ''): void {
+  // Fast read-only gate: MUST precede legacy warnings, waits, ZLib defaults,
+  // update checks, inventory refresh, planning and gameplay operations.
+  const args = command.trim().split(/\s+/).filter(Boolean);
+  if (args[0] === 'verify-rules') {
+    if (args.slice(1).some(flag => flag !== '--quiet')) {
+      logger.error('Usage: philter verify-rules [--quiet]');
+      return;
+    }
+    verifyRules(args.includes('--quiet'));
+    return;
+  }
   // TODO: Remove this warning when ocd-cleanup.ash is deprecated
   logger.warn(
     'Philter.js is currently in alpha. It may contain bugs which could destroy your items.'
