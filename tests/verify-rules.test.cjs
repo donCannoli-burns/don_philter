@@ -3,7 +3,7 @@
  * Test the BUILT isolated Don Philter bundle with a synthetic KoLmafia runtime.
  * No KoL login, file writes, items, preferences, network, or cleanup actions.
  */
-const assert = require('assert').strict;
+const assert = require('assert');
 const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
@@ -53,7 +53,7 @@ function run(args, files = {}, preferences = {}) {
       return files[filename] || [];
     },
     toItem: item,
-    toInt: value => typeof value === 'object' ? value.id : Number(value),
+    toInt: value => (typeof value === 'object' ? value.id : Number(value)),
     toBoolean: value => value === 'true',
     print: value => output.push(String(value)),
     getInventory: deny('getInventory'),
@@ -81,7 +81,11 @@ function run(args, files = {}, preferences = {}) {
   vm.runInNewContext(bundle, context, {timeout: 5000});
   assert.equal(typeof mod.exports.main, 'function');
   mod.exports.main(args);
-  assert.deepEqual(mutating, [], 'verification invoked a mutating/refresh action');
+  assert.deepEqual(
+    mutating,
+    [],
+    'verification invoked a mutating/refresh action'
+  );
   return {output: output.join('\n'), accesses};
 }
 
@@ -116,7 +120,10 @@ check('canonical filename uses the production parser and prints counts', () => {
   assert.match(r.output, /AUTO: 1/);
   assert.match(r.output, /MALL: 1/);
   assert.match(r.output, /KEEP: 1/);
-  assert.match(r.output, /VERIFY-RULES PASS: 3 cleanup records, 0 stock records/);
+  assert.match(
+    r.output,
+    /VERIFY-RULES PASS: 3 cleanup records, 0 stock records/
+  );
   assert.ok(r.accesses.includes('don_data_doncannoli1.txt'));
 });
 check('quiet suppresses action details but still shows verdict', () => {
@@ -159,19 +166,29 @@ check('enabled stock with missing file blocks verification', () => {
     {'don_data_doncannoli1.txt': good},
     {BaleOCD_Stock: '1'}
   );
-  assert.match(r.output, /stocking enabled but no stock ruleset available|Philter parser rejected/i);
+  assert.match(
+    r.output,
+    /stocking enabled but no stock ruleset available|Philter parser rejected/i
+  );
   assert.doesNotMatch(r.output, /VERIFY-RULES PASS/);
 });
 check('malicious configured filename suffix is refused before file I/O', () => {
-  const r = run('verify-rules', {'don_data_doncannoli1.txt': good}, {
-    BaleOCD_DataFile: '../../session',
-  });
+  const r = run(
+    'verify-rules',
+    {'don_data_doncannoli1.txt': good},
+    {
+      BaleOCD_DataFile: '../../session',
+    }
+  );
   assert.match(r.output, /VERIFY-RULES FAILED/);
   assert.deepEqual(r.accesses, []);
 });
 check('unknown flags never access inventory or any ruleset', () => {
   const r = run('verify-rules --execute', {'don_data_doncannoli1.txt': good});
-  assert.match(r.output, /unknown command|Usage: don_philter_report\\.js verify-rules/);
+  assert.match(
+    r.output,
+    /unknown command|Usage: don_philter_report\\.js verify-rules/
+  );
   assert.deepEqual(r.accesses, []);
 });
 console.log('Don Philter verify-rules tests passed:', passed);
