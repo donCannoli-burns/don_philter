@@ -3,10 +3,10 @@
  * Test the BUILT isolated Don Philter bundle with a synthetic KoLmafia runtime.
  * No KoL login, file writes, items, preferences, network, or cleanup actions.
  */
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const vm = require('node:vm');
-const path = require('node:path');
+const assert = require('assert').strict;
+const fs = require('fs');
+const vm = require('vm');
+const path = require('path');
 
 const repo = path.resolve(__dirname, '..');
 const bundle = fs.readFileSync(
