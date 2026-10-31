@@ -9,8 +9,12 @@ const vm = require('vm');
 const path = require('path');
 
 const repo = path.resolve(__dirname, '..');
-const bundle = fs.readFileSync(
+const reporterBundle = fs.readFileSync(
   path.join(repo, 'release/scripts/don_philter_report.js'),
+  'utf8'
+);
+const regularBundle = fs.readFileSync(
+  path.join(repo, 'release/scripts/philter.js'),
   'utf8'
 );
 const verifierSource = fs.readFileSync(
@@ -22,7 +26,7 @@ const entrySource = fs.readFileSync(
   'utf8'
 );
 
-function run(args, files = {}, preferences = {}) {
+function run(args, files = {}, preferences = {}, compiled = reporterBundle) {
   const output = [];
   const accesses = [];
   const mutating = [];
@@ -78,7 +82,7 @@ function run(args, files = {}, preferences = {}) {
     console,
     Item: {get: item},
   };
-  vm.runInNewContext(bundle, context, {timeout: 5000});
+  vm.runInNewContext(compiled, context, {timeout: 5000});
   assert.equal(typeof mod.exports.main, 'function');
   mod.exports.main(args);
   assert.deepEqual(
@@ -124,6 +128,16 @@ check('canonical filename uses the production parser and prints counts', () => {
     r.output,
     /VERIFY-RULES PASS: 3 cleanup records, 0 stock records/
   );
+  assert.ok(r.accesses.includes('don_data_doncannoli1.txt'));
+});
+check('regular Philter bundle also exits before normal execution', () => {
+  const r = run(
+    'verify-rules --quiet',
+    {'don_data_doncannoli1.txt': good},
+    {},
+    regularBundle
+  );
+  assert.match(r.output, /VERIFY-RULES PASS: 3 cleanup records/);
   assert.ok(r.accesses.includes('don_data_doncannoli1.txt'));
 });
 check('quiet suppresses action details but still shows verdict', () => {
